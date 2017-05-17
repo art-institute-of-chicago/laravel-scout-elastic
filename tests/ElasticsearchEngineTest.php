@@ -43,6 +43,29 @@ class ElasticsearchEngineTest extends TestCase
         $engine->update(Collection::make([new SearchableModel]));
     }
 
+    public function test_update_adds_objects_to_model_index()
+    {
+        $client = Mockery::mock('Elasticsearch\Client');
+        $client->shouldReceive('bulk')->with([
+            'body' => [
+                [
+                    'update' => [
+                        '_id' => 1,
+                        '_index' => 'table',
+                        '_type' => 'table',
+                    ]
+                ],
+                [
+                    'doc' => ['id' => 1 ],
+                    'doc_as_upsert' => true
+                ]
+            ]
+        ]);
+
+        $engine = new ElasticsearchEngine($client, 'scout', true);
+        $engine->update(Collection::make([new ElasticsearchEngineTestModel]));
+    }
+
     public function test_delete_removes_objects_to_index()
     {
         /** @var Client|MockInterface $client */
@@ -61,6 +84,25 @@ class ElasticsearchEngineTest extends TestCase
 
         $engine = new ElasticsearchEngine($client);
         $engine->delete(Collection::make([new SearchableModel]));
+    }
+
+    public function test_delete_removes_objects_to_model_index()
+    {
+        $client = Mockery::mock('Elasticsearch\Client');
+        $client->shouldReceive('bulk')->with([
+            'body' => [
+                [
+                    'delete' => [
+                        '_id' => 1,
+                        '_index' => 'table',
+                        '_type' => 'table',
+                    ]
+                ],
+            ]
+        ]);
+
+        $engine = new ElasticsearchEngine($client, 'scout', true);
+        $engine->delete(Collection::make([new ElasticsearchEngineTestModel]));
     }
 
     public function test_search_sends_correct_parameters_to_elasticsearch()
@@ -90,6 +132,34 @@ class ElasticsearchEngineTest extends TestCase
         $builder = new Builder(new SearchableModel, 'zonda');
         $builder->where('foo', 1);
         $builder->where('bar', [1, 3]);
+        $builder->orderBy('id', 'desc');
+        $engine->search($builder);
+    }
+
+    public function test_search_sends_correct_parameters_to_elasticsearch_with_model_index()
+    {
+        $client = Mockery::mock('Elasticsearch\Client');
+        $client->shouldReceive('search')->with([
+            'index' => 'table',
+            'type' => 'table',
+            'body' => [
+                'query' => [
+                    'bool' => [
+                        'must' => [
+                            ['query_string' => ['query' => '*zonda*']],
+                            ['match_phrase' => ['foo' => 1]]
+                        ]
+                    ]
+                ],
+                'sort' => [
+                    ['id' => 'desc']
+                ]
+            ]
+        ]);
+
+        $engine = new ElasticsearchEngine($client, 'scout', true);
+        $builder = new Laravel\Scout\Builder(new ElasticsearchEngineTestModel, 'zonda');
+        $builder->where('foo', 1);
         $builder->orderBy('id', 'desc');
         $engine->search($builder);
     }

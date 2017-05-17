@@ -10,11 +10,18 @@ use Illuminate\Database\Eloquent\Collection;
 class ElasticsearchEngine extends Engine
 {
     /**
-     * Elastic client.
+     * Default index where the models will be saved.
      *
      * @var Elastic
      */
     protected $elastic;
+
+    /**
+     * If the index should be set per model.
+     *
+     * @var bool
+     */
+    protected $perModelIndex;
 
     /**
      * Create a new engine instance.
@@ -22,9 +29,22 @@ class ElasticsearchEngine extends Engine
      * @param  \Elasticsearch\Client  $elastic
      * @return void
      */
-    public function __construct(Elastic $elastic)
+    public function __construct(Elastic $elastic, $index, $perModelIndex = false)
     {
         $this->elastic = $elastic;
+        $this->index = $index;
+        $this->perModelIndex = $perModelIndex;
+    }
+
+    /**
+     * Retrieves the index for the given model.
+     *
+     * @param  \Illuminate\Database\Eloquent\Model  $model
+     * @return string
+     */
+    protected function getIndex($model)
+    {
+        return ($this->perModelIndex ? $model->searchableAs() : $this->index);
     }
 
     /**
@@ -44,9 +64,9 @@ class ElasticsearchEngine extends Engine
         $models->each(function ($model) use (&$params) {
             $params['body'][] = [
                 'update' => [
-                    '_id' => $model->getScoutKey(),
-                    '_index' => $model->searchableAs(),
-                    '_type' => get_class($model),
+                    '_id' => $model->getKey(),
+                    '_index' => $this->getIndex($model),
+                    '_type' => $model->searchableAs(),
                 ]
             ];
             $params['body'][] = [
@@ -72,8 +92,8 @@ class ElasticsearchEngine extends Engine
             $params['body'][] = [
                 'delete' => [
                     '_id' => $model->getKey(),
-                    '_index' => $model->searchableAs(),
-                    '_type' => get_class($model),
+                    '_index' => $this->getIndex($model),
+                    '_type' => $model->searchableAs(),
                 ]
             ];
         });
@@ -126,8 +146,8 @@ class ElasticsearchEngine extends Engine
     protected function performSearch(Builder $builder, array $options = [])
     {
         $params = [
-            'index' => $builder->model->searchableAs(),
-            'type' => get_class($builder->model),
+            'index' => $builder->index ?: $this->getIndex($builder->model),
+            'type' => $builder->index ?: $builder->model->searchableAs(),
             'body' => [
                 'query' => [
                     'bool' => [
