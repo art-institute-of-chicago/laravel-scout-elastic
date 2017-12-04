@@ -44,7 +44,7 @@ class ElasticsearchEngine extends Engine
      */
     protected function getIndex($model)
     {
-        return ($this->perModelIndex ? $model->searchableAs() : $this->index);
+        return ($this->perModelIndex ? $this->index . $model->searchableAs() : $this->index);
     }
 
     /**
