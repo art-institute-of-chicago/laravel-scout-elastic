@@ -28,11 +28,11 @@ class ElasticsearchEngine extends Engine
     protected $elastic;
 
     /**
-     * If the index should be set per model.
+     * If the index should be treated as a prefix.
      *
      * @var bool
      */
-    protected $perModelIndex;
+    protected $indexIsPrefix;
 
     /**
      * Create a new engine instance.
@@ -40,11 +40,11 @@ class ElasticsearchEngine extends Engine
      * @param  \Elasticsearch\Client  $elastic
      * @return void
      */
-    public function __construct(Elastic $elastic, $index, $perModelIndex = false)
+    public function __construct(Elastic $elastic, $index, $indexIsPrefix = false)
     {
         $this->elastic = $elastic;
         $this->index = $index;
-        $this->perModelIndex = $perModelIndex;
+        $this->indexIsPrefix = $indexIsPrefix;
     }
 
     /**
@@ -55,7 +55,14 @@ class ElasticsearchEngine extends Engine
      */
     protected function getIndex($model)
     {
-        return ($this->perModelIndex ? $this->index . $model->searchableAs() : $this->index);
+        if (!$this->indexIsPrefix)
+        {
+            return $this->index;
+        }
+
+        $suffix = method_exists($model, 'searchableIndex') ? $model->searchableIndex() : $model->searchableAs();
+
+        return $this->index . $suffix;
     }
 
     /**
@@ -66,7 +73,7 @@ class ElasticsearchEngine extends Engine
      */
     protected function getType($model)
     {
-        return $model->searchableAs();
+        return method_exists($model, 'searchableType') ? $model->searchableType() : $model->searchableAs();
     }
 
     /**
