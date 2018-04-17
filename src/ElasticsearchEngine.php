@@ -79,7 +79,12 @@ class ElasticsearchEngine extends Engine
             ];
         });
 
-        $this->elastic->bulk($params);
+        $result = $this->elastic->bulk($params);
+
+        if (isset($result['errors']) === true && $result['errors'] === true)
+        {
+            throw new \Exception(json_encode($result));
+        }
     }
 
     /**
