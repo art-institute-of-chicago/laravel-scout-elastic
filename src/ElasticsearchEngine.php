@@ -16,7 +16,7 @@ class ElasticsearchEngine extends Engine
      * @var string
      */
     protected $index;
-    
+
     /**
      * Elastic where the instance of Elastic|\Elasticsearch\Client is stored.
      *
@@ -80,7 +80,12 @@ class ElasticsearchEngine extends Engine
             ];
         });
 
-        $this->elastic->bulk($params);
+        $result = $this->elastic->bulk($params);
+
+        if (isset($result['errors']) === true && $result['errors'] === true)
+        {
+            throw new \Exception(json_encode($result));
+        }
     }
 
     /**
