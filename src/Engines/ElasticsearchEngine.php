@@ -59,6 +59,32 @@ class ElasticsearchEngine extends Engine
     }
 
     /**
+     * Retrieves the type for the given model.
+     *
+     * @param  \Illuminate\Database\Eloquent\Model  $model
+     * @return string
+     */
+    protected function getType($model)
+    {
+        return $model->searchableAs();
+    }
+
+    /**
+     * Retrieve the id, index, and type for the given model.
+     *
+     * @param  \Illuminate\Database\Eloquent\Model  $model
+     * @return array
+     */
+    protected function getIdIndexType($model)
+    {
+        return [
+            '_id' => $model->getKey(),
+            '_index' => $this->getIndex($model),
+            '_type' => $this->getType($model),
+        ];
+    }
+
+    /**
      * Update the given model in the index.
      *
      * @param  Collection  $models
@@ -74,11 +100,7 @@ class ElasticsearchEngine extends Engine
 
         $models->each(function ($model) use (&$params) {
             $params['body'][] = [
-                'update' => [
-                    '_id' => $model->getKey(),
-                    '_index' => $this->getIndex($model),
-                    '_type' => $model->searchableAs(),
-                ]
+                'update' => $this->getIdIndexType($model)
             ];
             $params['body'][] = [
                 'doc' => $model->toSearchableArray(),
@@ -106,11 +128,7 @@ class ElasticsearchEngine extends Engine
 
         $models->each(function ($model) use (&$params) {
             $params['body'][] = [
-                'delete' => [
-                    '_id' => $model->getKey(),
-                    '_index' => $this->getIndex($model),
-                    '_type' => $model->searchableAs(),
-                ]
+                'delete' => $this->getIdIndexType($model)
             ];
         });
 
@@ -163,7 +181,7 @@ class ElasticsearchEngine extends Engine
     {
         $params = [
             'index' => $builder->index ?: $this->getIndex($builder->model),
-            'type' => $builder->index ?: $builder->model->searchableAs(),
+            'type' => $builder->index ?: $this->getType($builder->model),
             'body' => [
                 'query' => [
                     'bool' => [
