@@ -12,7 +12,18 @@ class ElasticsearchEngine extends Engine
     /**
      * Default index where the models will be saved.
      *
+<<<<<<< HEAD:src/Engines/ElasticsearchEngine.php
      * @var Elastic
+=======
+     * @var string
+     */
+    protected $index;
+
+    /**
+     * Elastic where the instance of Elastic|\Elasticsearch\Client is stored.
+     *
+     * @var object
+>>>>>>> Throw exception when `searchable` receives error from ES:src/ElasticsearchEngine.php
      */
     protected $elastic;
 
@@ -75,7 +86,12 @@ class ElasticsearchEngine extends Engine
             ];
         });
 
-        $this->elastic->bulk($params);
+        $result = $this->elastic->bulk($params);
+
+        if (isset($result['errors']) === true && $result['errors'] === true)
+        {
+            throw new \Exception(json_encode($result));
+        }
     }
 
     /**
