@@ -1,18 +1,10 @@
 {
-<<<<<<< HEAD
-    "name": "tamayo/laravel-scout-elastic",
-=======
     "name": "aic/laravel-scout-elastic",
->>>>>>> b775bcc... Hard-fork tamayo/laravel-scout-elastic
     "description": "Elastic Driver for Laravel Scout",
     "keywords": ["laravel", "scout", "elasticsearch", "elastic"],
     "require": {
         "php": ">=5.6.4",
-<<<<<<< HEAD
         "laravel/scout": "^5.0|^6.0|^7.0",
-=======
-        "laravel/scout": "^3.0",
->>>>>>> b775bcc... Hard-fork tamayo/laravel-scout-elastic
         "elasticsearch/elasticsearch": "^5.0"
     },
      "require-dev": {
@@ -40,15 +32,12 @@
             ]
         }
     },
-<<<<<<< HEAD
-=======
     "authors": [
         {
             "name": "Erick Tamayo",
             "email": "ErickTamayo@users.noreply.github.com"
         }
     ],
->>>>>>> b775bcc... Hard-fork tamayo/laravel-scout-elastic
     "minimum-stability": "dev",
     "prefer-stable": true
 }
