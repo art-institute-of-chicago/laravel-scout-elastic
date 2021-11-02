@@ -12,9 +12,6 @@ class ElasticsearchEngine extends Engine
     /**
      * Default index where the models will be saved.
      *
-<<<<<<< HEAD:src/Engines/ElasticsearchEngine.php
-     * @var Elastic
-=======
      * @var string
      */
     protected $index;
@@ -23,7 +20,6 @@ class ElasticsearchEngine extends Engine
      * Elastic where the instance of Elastic|\Elasticsearch\Client is stored.
      *
      * @var object
->>>>>>> Throw exception when `searchable` receives error from ES:src/ElasticsearchEngine.php
      */
     protected $elastic;
 
@@ -35,16 +31,24 @@ class ElasticsearchEngine extends Engine
     protected $indexIsPrefix;
 
     /**
+     * If the index should be set per model.
+     *
+     * @var bool
+     */
+    protected $perModelIndex;
+
+    /**
      * Create a new engine instance.
      *
      * @param  \Elasticsearch\Client  $elastic
      * @return void
      */
-    public function __construct(Elastic $elastic, $index, $indexIsPrefix = false)
+    public function __construct(Elastic $elastic, $index, $indexIsPrefix = false, $perModelIndex = false)
     {
         $this->elastic = $elastic;
         $this->index = $index;
         $this->indexIsPrefix = $indexIsPrefix;
+        $this->perModelIndex = $perModelIndex;
     }
 
     /**
@@ -55,6 +59,11 @@ class ElasticsearchEngine extends Engine
      */
     protected function getIndex($model)
     {
+        if ($this->perModelIndex)
+        {
+            return $this->index . $model->searchableAs();
+        }
+
         if (!$this->indexIsPrefix)
         {
             return $this->index;
@@ -135,7 +144,11 @@ class ElasticsearchEngine extends Engine
 
         $models->each(function ($model) use (&$params) {
             $params['body'][] = [
-                'delete' => $this->getIdIndexType($model)
+                'delete' => [
+                    '_id' => $model->getKey(),
+                    '_index' => $this->getIndex($model),
+                    '_type' => $model->searchableAs(),
+                ]
             ];
         });
 
@@ -276,13 +289,12 @@ class ElasticsearchEngine extends Engine
         $modelIdPositions = array_flip($keys);
 
         return $model->getScoutModelsByIds(
-            $builder,
-            $keys
-        )->filter(function ($model) use ($keys) {
-            return in_array($model->getScoutKey(), $keys);
-        })->sortBy(function ($model) use ($modelIdPositions) {
-            return $modelIdPositions[$model->getScoutKey()];
-        })->values();
+                $builder, $keys
+            )->filter(function ($model) use ($keys) {
+                return in_array($model->getScoutKey(), $keys);
+            })->sortBy(function ($model) use ($modelIdPositions) {
+                return $modelIdPositions[$model->getScoutKey()];
+            })->values();
     }
 
     /**
