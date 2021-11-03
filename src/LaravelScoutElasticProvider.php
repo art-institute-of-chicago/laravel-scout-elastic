@@ -21,7 +21,9 @@ class LaravelScoutElasticProvider extends ServiceProvider
             return new ElasticsearchEngine(
                 ClientBuilder::create()
                     ->setHosts(config('scout.elasticsearch.hosts'))
-                    ->build()
+                    ->build(),
+                    config('scout.elasticsearch.index'),
+                    config('scout.elasticsearch.perModelIndex', false)
             );
         });
     }
