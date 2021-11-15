@@ -59,11 +59,6 @@ class ElasticsearchEngine extends Engine
      */
     protected function getIndex($model)
     {
-        if ($this->perModelIndex)
-        {
-            return $this->index . $model->searchableAs();
-        }
-
         if (!$this->indexIsPrefix)
         {
             return $this->index;
@@ -147,7 +142,7 @@ class ElasticsearchEngine extends Engine
                 'delete' => [
                     '_id' => $model->getKey(),
                     '_index' => $this->getIndex($model),
-                    '_type' => $model->searchableAs(),
+                    '_type' => $model->searchableType(),
                 ]
             ];
         });
