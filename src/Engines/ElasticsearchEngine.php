@@ -70,18 +70,7 @@ class ElasticsearchEngine extends Engine
     }
 
     /**
-     * Retrieves the type for the given model.
-     *
-     * @param  \Illuminate\Database\Eloquent\Model  $model
-     * @return string
-     */
-    protected function getType($model)
-    {
-        return method_exists($model, 'searchableType') ? $model->searchableType() : $model->searchableAs();
-    }
-
-    /**
-     * Retrieve the id, index, and type for the given model.
+     * Retrieve the id and index for the given model.
      *
      * @param  \Illuminate\Database\Eloquent\Model  $model
      * @return array
@@ -91,7 +80,6 @@ class ElasticsearchEngine extends Engine
         return [
             '_id' => $model->getKey(),
             '_index' => $this->getIndex($model),
-            '_type' => $this->getType($model),
         ];
     }
 
@@ -171,7 +159,6 @@ class ElasticsearchEngine extends Engine
                 'delete' => [
                     '_id' => $model->getKey(),
                     '_index' => $this->getIndex($model),
-                    '_type' => $model->searchableType(),
                 ]
             ];
         });
@@ -225,7 +212,6 @@ class ElasticsearchEngine extends Engine
     {
         $params = [
             'index' => $builder->index ?: $this->getIndex($builder->model),
-            'type' => $builder->index ?: $this->getType($builder->model),
             'body' => [
                 'query' => [
                     'bool' => [
